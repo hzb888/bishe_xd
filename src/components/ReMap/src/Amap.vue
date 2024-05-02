@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, getCurrentInstance, onBeforeMount, onUnmounted } from "vue";
+import { ref, reactive, getCurrentInstance, onBeforeMount, onUnmounted } from "vue";
 import { deviceDetection } from "@pureadmin/utils";
 import AMapLoader from "@amap/amap-jsapi-loader";
 import { mapJson } from "@/api/mock";
@@ -27,6 +27,8 @@ const instance = getCurrentInstance();
 const mapSet = reactive({
   loading: deviceDetection() ? false : true
 });
+
+let debug = ref(null);
 
 // 地图创建完成(动画关闭)
 const complete = (): void => {
@@ -83,11 +85,13 @@ onBeforeMount(() => {
 
         function onComplete(data) {
           console.log("onComplete", data)
+          debug.value = JSON.stringify(data);
           // data是具体的定位信息
         }
 
         function onError(data) {
           console.log("onError", data)
+          debug.value = JSON.stringify(data);
           // 定位出错
         }
       });
@@ -151,6 +155,7 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <div> 111{{ debug }}</div>
   <div id="mapview" ref="mapview" v-loading="mapSet.loading" />
 </template>
 
