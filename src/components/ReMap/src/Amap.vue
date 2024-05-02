@@ -64,6 +64,19 @@ onBeforeMount(() => {
             defaultType: 0
           })
         );
+        if (AMap.UA.ios && document.location.protocol !== 'https:') {
+          //使用远程定位，见 remogeo.js 
+          var remoGeo = new RemoGeoLocation();
+          //替换方法 
+          navigator.geolocation.getCurrentPosition = function () {
+            return remoGeo.getCurrentPosition.apply(remoGeo, arguments);
+          };
+          //替换方法 
+          navigator.geolocation.watchPosition = function () {
+            return remoGeo.watchPosition.apply(remoGeo, arguments);
+          };
+        }
+
         var geolocation = new AMap.Geolocation({
           enableHighAccuracy: true, // 是否使用高精度定位，默认：true
           timeout: 10000, // 设置定位超时时间，默认：无穷大
