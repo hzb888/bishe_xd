@@ -7,8 +7,7 @@ import { PureTableBar } from "@/components/RePureTableBar";
 import { useRole } from "./utils/hook";
 import AddFill from "@iconify-icons/ri/add-circle-line";
 import EditPen from "@iconify-icons/ep/edit-pen"
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { useDetail } from "./hooks";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";;
 
 import {
   delay,
@@ -49,39 +48,35 @@ const {
   // handleDatabase,
   handleSizeChange,
   handleCurrentChange,
-  handleSelectionChange
+  handleSelectionChange,
+  sortByTime,
+  sortByDistance,
 } = useRole(treeRef);
-
-const { toDetail, router } = useDetail();
 
 
 </script>
 
 <template>
   <div>
+
+    <div>
+      <el-button type="primary" @click="sortByTime()">按时间排序</el-button>
+      <el-button type="primary" @click="sortByDistance()">按距离排序</el-button>
+    </div>
+
     <PureTableBar :class="[isShow && !deviceDetection() ? '!w-[60vw]' : 'w-full']"
-      style="transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1)" title="全部运动" :columns="columns" @refresh="onSearch">
+      style="transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1)" title="运动排行榜" :columns="columns" @refresh="onSearch">
       <template #buttons>
-        <el-button type="primary" :icon="useRenderIcon(AddFill)" @click="openDialog()">
-          新增运动
-        </el-button>
       </template>
       <template v-slot="{ size, dynamicColumns }">
         <pure-table ref="tableRef" align-whole="center" showOverflowTooltip table-layout="auto" :loading="loading"
           :size="size" adaptive :row-style="rowStyle" :adaptiveConfig="{ offsetBottom: 108 }" :data="dataList"
           :columns="dynamicColumns" :header-cell-style="{
-      background: 'var(--el-fill-color-light)',
-      color: 'var(--el-text-color-primary)'
-    }" @selection-change="handleSelectionChange" @page-size-change="handleSizeChange"
+        background: 'var(--el-fill-color-light)',
+        color: 'var(--el-text-color-primary)'
+      }" @selection-change="handleSelectionChange" @page-size-change="handleSizeChange"
           @page-current-change="handleCurrentChange">
           <template #operation="{ row }">
-            <el-button class="reset-margin" link type="primary" :size="size" :icon="useRenderIcon(Menu)" @click="
-      router.push({
-        name: 'map-map',
-        query: row
-      })">
-              开始运动
-            </el-button>
             <el-popconfirm :title="`是否确认删除运动名称为${row.name}的这条数据`" @confirm="handleDelete(row)">
               <template #reference>
                 <el-button class="reset-margin" link type="primary" :size="size" :icon="useRenderIcon(Delete)">

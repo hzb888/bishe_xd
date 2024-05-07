@@ -8,7 +8,7 @@ import { FormProps } from "./utils/types";
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
     name: "",
-    code: "",
+    type: "",
     remark: ""
   })
 });
@@ -24,19 +24,18 @@ defineExpose({ getRef });
 </script>
 
 <template>
-
-
   <el-form ref="ruleFormRef" :model="newFormInline" :rules="formRules" label-width="82px">
-    <el-form-item label="角色名称" prop="name">
-      <el-input v-model="newFormInline.name" clearable placeholder="请输入角色名称" />
+    <el-form-item label="用户名" prop="name">
+      <el-input v-model="newFormInline.name" clearable placeholder="请输入用户名" />
     </el-form-item>
 
-    <el-form-item label="角色标识" prop="code">
-      <el-input v-model="newFormInline.code" clearable placeholder="请输入角色标识" />
+    <el-form-item label="账号" prop="type">
+      <el-input v-model="newFormInline.type" clearable placeholder="请输入账号" />
     </el-form-item>
 
-    <el-form-item label="备注">
-      <el-input v-model="newFormInline.remark" placeholder="请输入备注信息" type="textarea" />
+    <el-form-item label="密码" prop="type">
+      <el-input v-model="newFormInline.remark" clearable placeholder="请输入密码" />
     </el-form-item>
+
   </el-form>
 </template>

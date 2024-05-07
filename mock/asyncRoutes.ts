@@ -38,26 +38,55 @@ const permissionRouter = {
   ]
 };
 
-const schoolRouter = {
-  path: "/school",
+const userRouter = {
+  path: "/user",
   meta: {
-    title: "学校管理",
+    title: "用户管理",
     icon: "ep:lollipop",
-    rank: 9
+    rank: 10
   },
   children: [
     {
-      path: "/school/config/index",
-      name: "school-config",
+      path: "/user/index",
+      name: "user-user",
       meta: {
-        title: "学校配置"
+        title: "用户列表"
       }
-    },
+    }
+  ]
+};
+
+const orderRouter = {
+  path: "/order",
+  meta: {
+    title: "运动数据",
+    icon: "ep:lollipop",
+    rank: 8
+  },
+  children: [
     {
-      path: "/school/post/index",
-      name: "school-post",
+      path: "/order/index",
+      name: "order-order",
       meta: {
-        title: "帖子列表"
+        title: "运动数据"
+      }
+    }
+  ]
+};
+
+const sortRouter = {
+  path: "/sort",
+  meta: {
+    title: "排行榜",
+    icon: "ep:lollipop",
+    rank: 8
+  },
+  children: [
+    {
+      path: "/sort/index",
+      name: "sort-sort",
+      meta: {
+        title: "排行榜"
       }
     }
   ]
@@ -77,13 +106,6 @@ const mapRouter = {
       meta: {
         title: "地图"
       }
-    },
-    {
-      path: "/map/data/index",
-      name: "map-data",
-      meta: {
-        title: "地图数据"
-      }
     }
   ]
 };
@@ -95,7 +117,7 @@ export default defineFakeRoute([
     response: () => {
       return {
         success: true,
-        data: [permissionRouter, schoolRouter, mapRouter]
+        data: [userRouter, mapRouter, orderRouter, sortRouter]
       };
     }
   }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, getCurrentInstance, onBeforeMount, onUnmounted } from "vue";
+import { reactive, getCurrentInstance, onBeforeMount, onUnmounted } from "vue";
 import { deviceDetection } from "@pureadmin/utils";
 import AMapLoader from "@amap/amap-jsapi-loader";
 import { mapJson } from "@/api/mock";
@@ -19,8 +19,19 @@ defineOptions({
   name: "Amap"
 });
 
+defineExpose({
+  start,
+  stop
+});
+
+
 let MarkerCluster;
 let map: MapConfigureInter;
+let test_marker;
+let lineArr = [
+  [117.076251, 33.628544],
+  [117.078829, 33.638671]
+];
 
 const instance = getCurrentInstance();
 
@@ -28,7 +39,20 @@ const mapSet = reactive({
   loading: deviceDetection() ? false : true
 });
 
-let debug = ref(null);
+function start() {
+  console.log("start===================")
+  test_marker.moveAlong(lineArr, {
+    // 每一段的时长
+    duration: 50000,//可根据实际采集时间间隔设置
+    // JSAPI2.0 是否延道路自动设置角度在 moveAlong 里设置
+    autoRotation: true,
+  });
+}
+
+function stop() {
+  console.log("stop===================")
+  test_marker.stopMove()
+}
 
 // 地图创建完成(动画关闭)
 const complete = (): void => {
@@ -44,19 +68,17 @@ onBeforeMount(() => {
   const { MapConfigure } = instance.appContext.config.globalProperties.$config;
   const { options } = MapConfigure;
 
-
-
   AMapLoader.load({
     key: MapConfigure.amapKey,
     version: "2.0",
-    plugins: ["AMap.MarkerCluster"]
+    plugins: ["AMap.MarkerCluster", "AMap.Polyline", "AMap.MoveAnimation"]
   })
     .then(AMap => {
       // 创建地图实例
       map = new AMap.Map(instance.refs.mapview, options);
 
       //地图中添加地图操作ToolBar插件
-      map.plugin(["AMap.ToolBar", "AMap.MapType", "AMap.Geolocation"], () => {
+      map.plugin(["AMap.ToolBar", "AMap.MapType"], () => {
         map.addControl(new AMap.ToolBar());
         //地图类型切换
         map.addControl(
@@ -64,92 +86,82 @@ onBeforeMount(() => {
             defaultType: 0
           })
         );
-        if (AMap.UA.ios && document.location.protocol !== 'https:') {
-          //使用远程定位，见 remogeo.js 
-          var remoGeo = new RemoGeoLocation();
-          //替换方法 
-          navigator.geolocation.getCurrentPosition = function () {
-            return remoGeo.getCurrentPosition.apply(remoGeo, arguments);
-          };
-          //替换方法 
-          navigator.geolocation.watchPosition = function () {
-            return remoGeo.watchPosition.apply(remoGeo, arguments);
-          };
-        }
-
-        var geolocation = new AMap.Geolocation({
-          enableHighAccuracy: true, // 是否使用高精度定位，默认：true
-          timeout: 10000, // 设置定位超时时间，默认：无穷大
-          offset: [80, 20],  // 定位按钮的停靠位置的偏移量
-          convert: true,
-          zoomToAccuracy: true,  //  定位成功后调整地图视野范围使定位位置及精度范围视野内可见，默认：false
-          position: 'RB' //  定位按钮的排放位置,  RB表示右下
-        })
-
-        map.addControl(geolocation);
-
-        geolocation.getCurrentPosition(function (status, result) {
-          if (status == 'complete') {
-            onComplete(result)
-          } else {
-            onError(result)
-          }
-        });
-
-        function onComplete(data) {
-          console.log("onComplete", data)
-          debug.value = JSON.stringify(data);
-          // data是具体的定位信息
-        }
-
-        function onError(data) {
-          console.log("onError", data)
-          debug.value = JSON.stringify(data);
-          // 定位出错
-        }
+      });
+      // 绘制轨迹
+      var polyline = new AMap.Polyline({
+        map: map,
+        path: [[117.076251, 33.628544], [117.078829, 33.638671]],
+        showDir: true,
+        strokeColor: "#28F",  //线颜色
+        // strokeOpacity: 1,     //线透明度
+        strokeWeight: 6,      //线宽
+        // strokeStyle: "solid"  //线样式
+      });
+      test_marker = new AMap.Marker({
+        map: map,
+        position: lineArr[0],
+        icon: "https://a.amap.com/jsapi_demos/static/demo-center-v2/car.png",
+        offset: new AMap.Pixel(-13, -26),
+      });
+      var passedPolyline = new AMap.Polyline({
+        map: map,
+        strokeColor: "#AF5",  //线颜色
+        strokeWeight: 6,      //线宽
       });
 
-      MarkerCluster = new AMap.MarkerCluster(map, [], {
-        // 聚合网格像素大小
-        gridSize: 80,
-        maxZoom: 14,
-        renderMarker(ctx) {
-          const { marker, data } = ctx;
-          if (Array.isArray(data) && data[0]) {
-            const { driver, plateNumber, orientation } = data[0];
-            const content = `<img style="transform: scale(1) rotate(${360 - Number(orientation)
-              }deg);" src='${car}' />`;
-            marker.setContent(content);
-            marker.setLabel({
-              direction: "bottom",
-              //设置文本标注偏移量
-              offset: new AMap.Pixel(-4, 0),
-              //设置文本标注内容
-              content: `<div> ${plateNumber}(${driver})</div>`
-            });
-            marker.setOffset(new AMap.Pixel(-18, -10));
-            marker.on("click", ({ lnglat }) => {
-              map.setZoom(13); //设置地图层级
-              map.setCenter(lnglat);
-            });
-          }
-        }
+      test_marker.on('moving', function (e) {
+        passedPolyline.setPath(e.passedPath);
+        map.setCenter(e.target.getPosition(), true)
       });
+
+      // marker.moveAlong([117.076251, 33.628544], [117.078829, 33.638671], {
+      //   // 每一段的时长
+      //   duration: 500,//可根据实际采集时间间隔设置
+      //   // JSAPI2.0 是否延道路自动设置角度在 moveAlong 里设置
+      //   autoRotation: true,
+      // });
+
+      // MarkerCluster = new AMap.MarkerCluster(map, [], {
+      //   // 聚合网格像素大小
+      //   gridSize: 80,
+      //   maxZoom: 14,
+      //   renderMarker(ctx) {
+      //     const { marker, data } = ctx;
+      //     if (Array.isArray(data) && data[0]) {
+      //       const { driver, plateNumber, orientation } = data[0];
+      //       const content = `<img style="transform: scale(1) rotate(${360 - Number(orientation)
+      //         }deg);" src='${car}' />`;
+      //       marker.setContent(content);
+      //       marker.setLabel({
+      //         direction: "bottom",
+      //         //设置文本标注偏移量
+      //         offset: new AMap.Pixel(-4, 0),
+      //         //设置文本标注内容
+      //         content: `<div> ${plateNumber}(${driver})</div>`
+      //       });
+      //       marker.setOffset(new AMap.Pixel(-18, -10));
+      //       marker.on("click", ({ lnglat }) => {
+      //         map.setZoom(13); //设置地图层级
+      //         map.setCenter(lnglat);
+      //       });
+      //     }
+      //   }
+      // });
 
       // 获取模拟车辆信息
-      mapJson()
-        .then(({ data }) => {
-          const points: object = data.map(v => {
-            return {
-              lnglat: [v.lng, v.lat],
-              ...v
-            };
-          });
-          if (MarkerCluster) MarkerCluster.setData(points);
-        })
-        .catch(err => {
-          console.log("err:", err);
-        });
+      // mapJson()
+      //   .then(({ data }) => {
+      //     const points: object = data.map(v => {
+      //       return {
+      //         lnglat: [v.lng, v.lat],
+      //         ...v
+      //       };
+      //     });
+      //     if (MarkerCluster) MarkerCluster.setData(points);
+      //   })
+      //   .catch(err => {
+      //     console.log("err:", err);
+      //   });
 
       complete();
     })
@@ -168,7 +180,6 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div> 111{{ debug }}</div>
   <div id="mapview" ref="mapview" v-loading="mapSet.loading" />
 </template>
 
